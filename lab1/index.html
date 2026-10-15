@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Лабораторная работа: Цветовые модели (RGB, CMYK, HLS)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f3; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #333; margin-bottom: 25px; text-align: center; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 1100px; width: 100%; }
+        .panel { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); flex: 1; min-width: 300px; }
+        .panel h2 { margin-top: 0; font-size: 1.2rem; color: #444; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .control-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+        .control-group label { font-size: 0.85rem; margin-bottom: 5px; color: #666; font-weight: 600; }
+        .control-row { display: flex; gap: 10px; align-items: center; }
+        .control-row input[type=range] { flex: 1; cursor: pointer; }
+        .control-row input[type=number] { width: 75px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .preview-container { max-width: 1100px; width: 100%; margin-top: 20px; }
+        .preview-box { width: 100%; height: 100px; border-radius: 10px; border: 1px solid #bbb; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .color-picker-wrapper { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: #555; font-weight: 600; }
+        .color-picker-wrapper input[type=color] { border: none; width: 40px; height: 30px; cursor: pointer; background: none; }
+    </style>
+</head>
+<body>
+<h1>Лабораторная работа: RGB — CMYK — HLS</h1>
+<div class="container">
+    <!-- RGB -->
+    <div class="panel">
+        <h2>
+            RGB Model
+            <div class="color-picker-wrapper">
+                Палитра: <input type="color" id="colorPicker" value="#ff0000">
+            </div>
+        </h2>
+        <div class="control-group"><label>Red (0–255)</label><div class="control-row"><input type="range" id="rRange" min="0" max="255" value="255"><input type="number" id="rNum" min="0" max="255" value="255"></div></div>
+        <div class="control-group"><label>Green (0–255)</label><div class="control-row"><input type="range" id="gRange" min="0" max="255" value="0"><input type="number" id="gNum" min="0" max="255" value="0"></div></div>
+        <div class="control-group"><label>Blue (0–255)</label><div class="control-row"><input type="range" id="bRange" min="0" max="255" value="0"><input type="number" id="bNum" min="0" max="255" value="0"></div></div>
+    </div>
+    <!-- CMYK -->
+    <div class="panel">
+        <h2>CMYK Model (%)</h2>
+        <div class="control-group"><label>Cyan (0–100)</label><div class="control-row"><input type="range" id="cRange" min="0" max="100" value="0"><input type="number" id="cNum" min="0" max="100" value="0"></div></div>
+        <div class="control-group"><label>Magenta (0–100)</label><div class="control-row"><input type="range" id="mRange" min="0" max="100" value="100"><input type="number" id="mNum" min="0" max="100" value="100"></div></div>
+        <div class="control-group"><label>Yellow (0–100)</label><div class="control-row"><input type="range" id="yRange" min="0" max="100" value="100"><input type="number" id="yNum" min="0" max="100" value="100"></div></div>
+        <div class="control-group"><label>Key / Black (0–100)</label><div class="control-row"><input type="range" id="kRange" min="0" max="100" value="0"><input type="number" id="kNum" min="0" max="100" value="0"></div></div>
+    </div>
+    <!-- HLS -->
+    <div class="panel">
+        <h2>HLS Model</h2>
+        <div class="control-group"><label>Hue (0–360°)</label><div class="control-row"><input type="range" id="hRange" min="0" max="360" value="0"><input type="number" id="hNum" min="0" max="360" value="0"></div></div>
+        <div class="control-group"><label>Lightness (0–100%)</label><div class="control-row"><input type="range" id="lRange" min="0" max="100" value="50"><input type="number" id="lNum" min="0" max="100" value="50"></div></div>
+        <div class="control-group"><label>Saturation (0–100%)</label><div class="control-row"><input type="range" id="sRange" min="0" max="100" value="100"><input type="number" id="sNum" min="0" max="100" value="100"></div></div>
+    </div>
+</div>
+<div class="preview-container">
+    <div class="panel">
+        <h2>Интерактивный цвет</h2>
+        <div id="preview" class="preview-box" style="background-color: rgb(255, 0, 0);"></div>
+    </div>
+</div>
+
+<script>
+    let activeModel = null;
+
+    function bindControls(ids, updateFunc) {
+        ids.forEach(id => {
+            let range = document.getElementById(id + 'Range');
+            let num = document.getElementById(id + 'Num');
+            range.addEventListener('input', () => {
+                num.value = range.value;
+                activeModel = id[0].toLowerCase();
+                updateFunc();
+            });
+            num.addEventListener('input', () => {
+                range.value = num.value;
+                activeModel = id[0].toLowerCase();
+                updateFunc();
+            });
+        });
+    }
+
+    bindControls(['r', 'g', 'b'], fromRgb);
+    bindControls(['c', 'm', 'y', 'k'], fromCmyk);
+    bindControls(['h', 'l', 's'], fromHls);
+
+    // Обработка палитры (Color Picker)
+    const colorPicker = document.getElementById('colorPicker');
+    colorPicker.addEventListener('input', (e) => {
+        let hex = e.target.value;
+        let r = parseInt(hex.substr(1,2), 16);
+        let g = parseInt(hex.substr(3,2), 16);
+        let b = parseInt(hex.substr(5,2), 16);
+
+        activeModel = 'rgb';
+        setVal('rRange', 'rNum', r);
+        setVal('gRange', 'gNum', g);
+        setVal('bRange', 'bNum', b);
+        fromRgb();
+    });
+
+    function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+    function setVal(idRange, idNum, val) {
+        let rounded = Math.round(val);
+        document.getElementById(idRange).value = rounded;
+        document.getElementById(idNum).value = rounded;
+    }
+
+    function updatePreview(r, g, b) {
+        document.getElementById('preview').style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+        // Синхронизируем цвет палитры с текущим RGB
+        let hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        colorPicker.value = hex;
+    }
+
+    function fromRgb() {
+        let r = getVal('rNum'), g = getVal('gNum'), b = getVal('bNum');
+        updatePreview(r, g, b);
+        if (activeModel !== 'c' && activeModel !== 'm' && activeModel !== 'y' && activeModel !== 'k') {
+            let cmyk = rgbToCmyk(r, g, b);
+            setVal('cRange', 'cNum', cmyk.c * 100);
+            setVal('mRange', 'mNum', cmyk.m * 100);
+            setVal('yRange', 'yNum', cmyk.y * 100);
+            setVal('kRange', 'kNum', cmyk.k * 100);
+        }
+        if (activeModel !== 'h' && activeModel !== 'l' && activeModel !== 's') {
+            let hls = rgbToHls(r, g, b);
+            setVal('hRange', 'hNum', hls.h);
+            setVal('lRange', 'lNum', hls.l * 100);
+            setVal('sRange', 'sNum', hls.s * 100);
+        }
+        activeModel = null;
+    }
+
+    function fromCmyk() {
+        let c = getVal('cNum')/100, m = getVal('mNum')/100, y = getVal('yNum')/100, k = getVal('kNum')/100;
+        let rgb = cmykToRgb(c, m, y, k);
+        updatePreview(rgb.r, rgb.g, rgb.b);
+        if (activeModel !== 'r' && activeModel !== 'g' && activeModel !== 'b') {
+            setVal('rRange', 'rNum', rgb.r);
+            setVal('gRange', 'gNum', rgb.g);
+            setVal('bRange', 'bNum', rgb.b);
+        }
+        if (activeModel !== 'h' && activeModel !== 'l' && activeModel !== 's') {
+            let hls = rgbToHls(rgb.r, rgb.g, rgb.b);
+            setVal('hRange', 'hNum', hls.h);
+            setVal('lRange', 'lNum', hls.l * 100);
+            setVal('sRange', 'sNum', hls.s * 100);
+        }
+        activeModel = null;
+    }
+
+    function fromHls() {
+        let h = getVal('hNum'), l = getVal('lNum')/100, s = getVal('sNum')/100;
+        let rgb = hlsToRgb(h, l, s);
+        updatePreview(rgb.r, rgb.g, rgb.b);
+        if (activeModel !== 'r' && activeModel !== 'g' && activeModel !== 'b') {
+            setVal('rRange', 'rNum', rgb.r);
+            setVal('gRange', 'gNum', rgb.g);
+            setVal('bRange', 'bNum', rgb.b);
+        }
+        if (activeModel !== 'c' && activeModel !== 'm' && activeModel !== 'y' && activeModel !== 'k') {
+            let cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+            setVal('cRange', 'cNum', cmyk.c * 100);
+            setVal('mRange', 'mNum', cmyk.m * 100);
+            setVal('yRange', 'yNum', cmyk.y * 100);
+            setVal('kRange', 'kNum', cmyk.k * 100);
+        }
+        activeModel = null;
+    }
+
+    function rgbToCmyk(r, g, b) {
+        let nr = r/255, ng = g/255, nb = b/255;
+        let k = 1 - Math.max(nr, ng, nb);
+        if (k >= 1) {
+            // Защита от скачков/залипания Cyan при черном цвете: берем текущие значения из полей
+            return { c: getVal('cNum')/100, m: getVal('mNum')/100, y: getVal('yNum')/100, k: 1 };
+        }
+        return {
+            c: (1 - nr - k)/(1 - k),
+            m: (1 - ng - k)/(1 - k),
+            y: (1 - nb - k)/(1 - k),
+            k: k
+        };
+    }
+
+    function cmykToRgb(c, m, y, k) {
+        return {
+            r: Math.round(255 * (1 - c) * (1 - k)),
+            g: Math.round(255 * (1 - m) * (1 - k)),
+            b: Math.round(255 * (1 - y) * (1 - k))
+        };
+    }
+
+    function rgbToHls(r, g, b) {
+        let nr = r/255, ng = g/255, nb = b/255;
+        let max = Math.max(nr, ng, nb), min = Math.min(nr, ng, nb);
+        let delta = max - min, l = (max + min)/2, s = 0, h = getVal('hNum');
+
+        if (delta !== 0) {
+            s = l <= 0.5 ? delta / (max + min) : delta / (2 - max - min);
+            if (max === nr) h = ((ng - nb) / delta) % 6;
+            else if (max === ng) h = (nb - nr) / delta + 2;
+            else h = (nr - ng) / delta + 4;
+            h *= 60;
+            if (h < 0) h += 360;
+        }
+        return {h, l, s};
+    }
+
+    function hlsToRgb(h, l, s) {
+        let c = (1 - Math.abs(2 * l - 1)) * s;
+        let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        let m = l - c / 2;
+        let rp = 0, gp = 0, bp = 0;
+        if (h >= 0 && h < 60) { rp = c; gp = x; bp = 0; }
+        else if (h >= 60 && h < 120) { rp = x; gp = c; bp = 0; }
+        else if (h >= 120 && h < 180) { rp = 0; gp = c; bp = x; }
+        else if (h >= 180 && h < 240) { rp = 0; gp = x; bp = c; }
+        else if (h >= 240 && h < 300) { rp = x; gp = 0; bp = c; }
+        else if (h >= 300 && h < 360) { rp = c; gp = 0; bp = x; }
+        return {
+            r: Math.round((rp + m) * 255),
+            g: Math.round((gp + m) * 255),
+            b: Math.round((bp + m) * 255)
+        };
+    }
+</script>
+</body>
+</html>
