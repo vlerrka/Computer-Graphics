@@ -5,10 +5,10 @@ import numpy as np
 
 from PIL import Image
 
-from lab2.filters.niblack import niblack
-from lab2.filters.sauvola import sauvola
-from lab2.filters.laplacian import laplacian_sharpen
-from lab2.filters.unsharp import unsharp_mask
+from filters.niblack import niblack
+from filters.sauvola import sauvola
+from filters.laplacian import laplacian_sharpen
+from filters.unsharp import unsharp_mask
 
 
 # Настройки страницы
