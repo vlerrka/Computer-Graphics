@@ -273,7 +273,7 @@ python -m streamlit run app.py
 После запуска приложение открывается в браузере по локальному адресу,
 обычно `http://localhost:8501`.
 
-Также приложение задеплоено по ссылке: `https://computer-graphics-lab2app.streamlit.app/`.
+Также приложение задеплоено по (ссылке)[https://computer-graphics-lab2app.streamlit.app/].
 
 ## 4. Проведение экспериментов
 
